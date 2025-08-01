@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model orders {
+  order_id     Int      @id @default(autoincrement())
+  product_id   Int
+  user_id      Int
+  created_date DateTime @default(now()) @db.Timestamp(6)
+  products     products @relation(fields: [product_id], references: [product_id], onDelete: Cascade, onUpdate: NoAction)
+  users        users    @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model products {
+  product_id  Int      @id @default(autoincrement())
+  name        String
+  price       Decimal  @db.Decimal
+  image       String?
+  description String?
+  attributes  Json?
+  orders      orders[]
+}
+
+model users {
+  user_id    Int      @id @default(autoincrement())
+  first_name String
+  last_name  String
+  age        Int?
+  email      String?  @db.VarChar(255)
+  phone      String?
+  orders     orders[]
+}
+
+model identifiers {
+  id          Int      @id @default(autoincrement())
+  host        String   @db.VarChar(64)
+  plugin      String   @db.VarChar(64)
+  plugin_inst String?  @db.VarChar(64)
+  type        String   @db.VarChar(64)
+  type_inst   String?  @db.VarChar(64)
+  values      values[]
+
+  @@unique([host, plugin, plugin_inst, type, type_inst])
+  @@index([host], map: "identifiers_host")
+  @@index([plugin], map: "identifiers_plugin")
+  @@index([plugin_inst], map: "identifiers_plugin_inst")
+  @@index([type], map: "identifiers_type")
+  @@index([type_inst], map: "identifiers_type_inst")
+}
+
+model values {
+  id          Int
+  tstamp      DateTime    @db.Timestamptz(6)
+  name        String      @db.VarChar(64)
+  value       Float
+  identifiers identifiers @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([tstamp, id, name])
+}
